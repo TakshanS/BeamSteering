@@ -1,1 +1,28 @@
-
+c = 340;
+freq = [1000 2750];
+fc = 2000;
+numels = 11;
+microphone = phased.CosineAntennaElement('FrequencyRange',freq);
+array = phased.ULA('NumElements',numels,...
+   'ElementSpacing',0.5*c/fc,'Element',microphone);
+plotFreq = linspace(min(freq),max(freq),15);
+%pattern(microphone,plotFreq,[-180:180],0,'CoordinateSystem','rectangular',...
+    %'PlotStyle','waterfall','Type','powerdb')
+%pattern(array,plotFreq,[-180:180],0,'CoordinateSystem','rectangular',...
+ %   'PlotStyle','waterfall','Type','powerdb','PropagationSpeed',c)
+ direction = [30;0];
+numbands = 8;
+beamformer = phased.SubbandPhaseShiftBeamformer('SensorArray',array,...
+   'Direction',direction,...
+   'OperatingFrequency',fc,'PropagationSpeed',c,...
+   'SampleRate',1e3,...
+   'WeightsOutputPort',true,'SubbandsOutputPort',true,...
+   'NumSubbands',numbands);
+rx = ones(numbands,numels);
+[y,w,centerfreqs] = beamformer(rx);
+centerfreqs = fftshift(centerfreqs);
+w = fftshift(w,2);
+idx = [1,5,8];
+pattern(array,centerfreqs(idx).',[-180:180],0,'Weights',w(:,idx),'CoordinateSystem','rectangular',...
+    'PlotStyle','overlay','Type','powerdb','PropagationSpeed',c)
+legend('Location','South')
